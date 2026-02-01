@@ -31,8 +31,8 @@ function init() {
     workers.forEach(w => {
         let daily = w.p * 0.5;
         grid.innerHTML += `
-            <div class="bg-white/10 rounded-3xl p-4 text-center border border-white/20 shadow-lg">
-                <p class="text-[10px] text-yellow-300 font-black uppercase">${w.n} 50%</p>
+            <div class="bg-white/10 rounded-3xl p-4 text-center border border-white/20">
+                <p class="text-[10px] text-yellow-300 font-black uppercase">${w.n}</p>
                 <div class="my-2 text-3xl">👤</div>
                 <p class="text-[8px] opacity-70">Lãi: ${daily} 💰/ngày</p>
                 <button onclick="buy(${w.p}, ${daily})" class="mt-2 w-full bg-white/20 py-2 rounded-xl text-xs font-black border border-white/30 active:scale-95 transition">${w.p} 💰</button>
@@ -60,7 +60,6 @@ function init() {
     });
 }
 
-// --- LOGIC NGƯỜI CHƠI ---
 function buy(p, s) {
     if (userData.balance >= p) {
         userData.balance -= p;
@@ -83,28 +82,30 @@ function redeemCode() {
             save();
             tg.showAlert("Thành công! Nhận " + c.amount + " vàng");
             document.getElementById('giftcode-input').value = "";
-        } else {
-            tg.showAlert("Mã sai, hết lượt hoặc bạn đã sử dụng rồi!");
-        }
+        } else tg.showAlert("Mã sai, hết lượt hoặc đã sử dụng!");
     });
 }
 
 function updateVnd(v) { 
-    // Tỉ lệ: 10,000 Vàng = 5,000 VND => 1 Vàng = 0.5 VND
-    document.getElementById('vnd-preview').innerText = (v * 0.5).toLocaleString(); 
+    // Tỉ lệ: 100.000 vàng = 5.000 VND => 1 vàng = 0.05 VND
+    document.getElementById('vnd-preview').innerText = (v * 0.05).toLocaleString(); 
 }
 
 function withdraw() {
     let gold = parseFloat(document.getElementById('draw-gold').value);
     let info = document.getElementById('draw-info').value;
-    if (gold > userData.balance || gold < 1 || !info) return tg.showAlert("Thông tin không hợp lệ!");
+    
+    if (!gold || gold < 100000) return tg.showAlert("Rút tối thiểu 100,000 vàng!");
+    if (gold > userData.balance) return tg.showAlert("Số dư không đủ!");
+    if (!info) return tg.showAlert("Nhập thông tin nhận tiền!");
+
     userData.balance -= gold;
     db.ref('withdraws').push({ uid: user.id, gold: gold, info: info, status: "Pending", time: Date.now() });
     save();
     tg.showAlert("Đã gửi yêu cầu rút tiền thành công!");
 }
 
-// --- LOGIC ADMIN ---
+// --- ADMIN LOGIC ---
 function createGiftcode() {
     const code = document.getElementById('admin-code').value.trim().toUpperCase();
     const amount = parseFloat(document.getElementById('admin-code-val').value);
@@ -118,7 +119,7 @@ function adminAdjust(isAdd) {
     const uid = document.getElementById('admin-uid').value.trim();
     const amount = parseFloat(document.getElementById('admin-amount').value);
     if (!uid || isNaN(amount)) return;
-    db.ref('users/' + uid + '/balance').transaction(b => isAdd ? (b || 0) + amount : (current) => (current || 0) - amount);
+    db.ref('users/' + uid + '/balance').transaction(b => isAdd ? (b || 0) + amount : (b || 0) - amount);
     tg.showAlert("Đã cập nhật số dư UID: " + uid);
 }
 
@@ -126,12 +127,12 @@ function loadWithdraws() {
     db.ref('withdraws').on('value', s => {
         const list = document.getElementById('admin-withdraw-list');
         list.innerHTML = "";
-        if (!s.exists()) list.innerHTML = "<p class='text-[10px] text-center opacity-50'>Không có yêu cầu nào</p>";
+        if (!s.exists()) list.innerHTML = "<p class='text-[10px] text-center opacity-50'>Trống</p>";
         s.forEach(item => {
             const d = item.val();
             if (d.status === "Pending") {
-                list.innerHTML += `<div class="bg-black/40 p-3 rounded-xl text-[10px] border border-white/5 shadow-inner">
-                    UID: ${d.uid} | Vàng: ${d.gold} (${(d.gold * 0.5).toLocaleString()}đ)<br>
+                list.innerHTML += `<div class="bg-black/40 p-3 rounded-xl text-[10px] border border-white/5">
+                    UID: ${d.uid} | Vàng: ${d.gold} (${(d.gold * 0.05).toLocaleString()}đ)<br>
                     <span class="text-yellow-500">${d.info}</span>
                     <div class="flex gap-2 mt-2">
                         <button onclick="approve('${item.key}',true)" class="bg-green-600 px-3 py-1 rounded font-bold">DUYỆT</button>
@@ -146,18 +147,18 @@ function loadWithdraws() {
 function approve(key, isDone, uid, gold) {
     if (isDone) {
         db.ref('withdraws/' + key).update({ status: "Completed" });
-        tg.showAlert("Đã DUYỆT yêu cầu!");
+        tg.showAlert("Đã duyệt!");
     } else {
         db.ref('users/' + uid + '/balance').transaction(b => (b || 0) + gold);
         db.ref('withdraws/' + key).update({ status: "Cancelled" });
-        tg.showAlert("Đã HỦY và trả lại vàng cho người chơi!");
+        tg.showAlert("Đã hủy và trả vàng!");
     }
 }
 
-// --- HỆ THỐNG ---
+// --- SYSTEM ---
 function save() { userData.last = Date.now(); db.ref('users/' + user.id).set(userData); }
 function render() {
-    document.getElementById('balance').innerText = userData.balance.toLocaleString(undefined, {minimumFractionDigits: 2});
+    document.getElementById('balance').innerText = Math.floor(userData.balance).toLocaleString();
     document.getElementById('rate').innerText = (userData.speed / 24).toFixed(2);
 }
 function nav(t) {
@@ -173,18 +174,18 @@ function copyLink() {
     const url = document.getElementById("ref-url");
     url.select();
     navigator.clipboard.writeText(url.value);
-    tg.showAlert("Đã sao chép liên kết giới thiệu!");
+    tg.showAlert("Đã copy link mời!");
 }
 function doTask(chan, reward, id) {
     if (userData.tasks && userData.tasks[id]) return;
     tg.openTelegramLink("https://t.me/" + chan.replace('@', ''));
-    tg.showConfirm("Bạn đã tham gia chưa?", (ok) => {
+    tg.showConfirm("Xác nhận đã tham gia?", (ok) => {
         if (ok) {
             userData.balance += reward;
             if(!userData.tasks) userData.tasks = {};
             userData.tasks[id] = true;
             save();
-            tg.showAlert("Nhận thưởng thành công!");
+            tg.showAlert("Xong!");
         }
     });
 }
