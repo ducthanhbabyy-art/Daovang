@@ -31,8 +31,8 @@ function init() {
     tg.expand();
     render(); // Hiện 500 ngay khi vào
 
-    // Link mời bạn bè chuẩn
-    document.getElementById('ref-url').value = "https://t.me/GomXu_Bot/app?startapp=" + user.id;
+    // Link mời bạn bè 
+    document.getElementById('ref-url').value = "https://t.me/thanhdaovang_bot/app?startapp=" + user.id;
 
     const grid = document.getElementById('tab-mine');
     grid.innerHTML = "";
