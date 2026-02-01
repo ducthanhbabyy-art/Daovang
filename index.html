@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Thanh Đào Vàng</title>
+    <title>Gom Xu Đào Vàng</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
@@ -12,7 +12,6 @@
         .active-tab { color: #facc15; border-top: 3px solid #facc15; font-weight: 900; }
         .bg-main { background: linear-gradient(to bottom, #008f5a, #d2b48c); }
         .bg-glass { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
-        input::placeholder { color: rgba(255,255,255,0.5); }
     </style>
 </head>
 <body class="bg-main min-h-screen p-4 pb-24 font-bold text-white select-none">
@@ -22,7 +21,7 @@
             <div class="w-10 h-10 bg-orange-500 rounded-full border-2 border-[#8b5e3c] flex items-center justify-center text-white text-xl">👨‍🌾</div>
             <div>
                 <span class="text-[10px] opacity-70 uppercase tracking-tighter">Số dư vàng</span>
-                <div class="flex items-center gap-1 text-xl font-black text-yellow-600">💰 <span id="balance">0.00</span></div>
+                <div class="flex items-center gap-1 text-xl font-black text-yellow-600">💰 <span id="balance">500.00</span></div>
             </div>
         </div>
         <div class="text-right border-l border-[#8b5e3c] pl-3">
@@ -49,32 +48,29 @@
         </div>
 
         <div id="tab-ref" class="hidden space-y-4 text-center">
-            <div class="bg-glass p-6 rounded-3xl border border-white/20 shadow-2xl">
+            <div class="bg-glass p-6 rounded-3xl border border-white/20">
                 <h2 class="text-xl font-black mb-2 text-yellow-300">👥 MỜI BẠN BÈ</h2>
-                <p class="text-[10px] opacity-80 leading-relaxed mb-4">
-                    Tặng <span class="text-green-400">200 vàng</span> cho người mời.<br>
-                    Nhận <span class="text-green-400">10% hoa hồng</span> khi bạn bè mua thợ.
-                </p>
+                <p class="text-[10px] opacity-80 mb-4">Nhận 200 vàng khi bạn bè tham gia.</p>
                 <div class="flex gap-2">
-                    <input id="ref-url" readonly class="flex-1 bg-black/40 p-3 rounded-2xl text-[10px] outline-none text-center font-mono">
-                    <button onclick="copyLink()" class="bg-yellow-500 text-[#4a2e19] px-4 rounded-2xl font-black active:scale-90 transition">COPY</button>
+                    <input id="ref-url" readonly class="flex-1 bg-black/40 p-3 rounded-2xl text-[10px] outline-none text-center">
+                    <button onclick="copyLink()" class="bg-yellow-500 text-[#4a2e19] px-4 rounded-2xl font-black">COPY</button>
                 </div>
             </div>
         </div>
 
         <div id="tab-draw" class="hidden space-y-4 text-center">
             <div class="bg-glass p-6 rounded-3xl space-y-3">
-                <p class="text-xs opacity-80">Tỉ lệ: 1 Vàng = 0.0005 VND</p>
+                <p class="text-xs opacity-80">1 Vàng = 0.0005 VND</p>
                 <input type="text" id="draw-info" placeholder="Ngân hàng | STK | Tên" class="w-full p-3 rounded-xl bg-black/30 outline-none text-xs text-white">
                 <input type="number" id="draw-gold" oninput="updateVnd(this.value)" placeholder="Số vàng muốn rút" class="w-full p-3 rounded-xl bg-black/30 outline-none text-xs text-white">
-                <p class="text-yellow-300 text-sm">Nhận được: <span id="vnd-preview">0</span> VND</p>
+                <p class="text-yellow-300 text-sm">Nhận: <span id="vnd-preview">0</span> VND</p>
                 <button onclick="withdraw()" class="w-full bg-orange-600 py-4 rounded-2xl font-black shadow-lg">XÁC NHẬN RÚT</button>
             </div>
         </div>
     </div>
 
     <div class="fixed bottom-0 left-0 right-0 bg-[#8b5e3c] h-18 flex justify-around items-center border-t-2 border-yellow-600 z-50">
-        <button onclick="nav('mine')" id="btn-mine" class="flex flex-col items-center text-[10px] active-tab"><span>⛏️</span>Khai thác</button>
+        <button onclick="nav('mine')" id="btn-mine" class="flex flex-col items-center text-[10px] active-tab"><span>⛏️</span>Đào</button>
         <button onclick="nav('task')" id="btn-task" class="flex flex-col items-center text-[10px]"><span>🎁</span>Nhiệm vụ</button>
         <button onclick="nav('ref')" id="btn-ref" class="flex flex-col items-center text-[10px]"><span>👥</span>Mời bạn</button>
         <button onclick="nav('draw')" id="btn-draw" class="flex flex-col items-center text-[10px]"><span>💳</span>Rút tiền</button>
@@ -82,4 +78,4 @@
 
     <script src="script.js"></script>
 </body>
-    </html>
+            </html>
