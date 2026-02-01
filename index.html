@@ -22,7 +22,7 @@
             <div class="w-10 h-10 bg-orange-500 rounded-full border-2 border-[#8b5e3c] flex items-center justify-center text-white text-xl">👨‍🌾</div>
             <div>
                 <span class="text-[10px] opacity-70 uppercase tracking-tighter">Số dư vàng</span>
-                <div class="flex items-center gap-1 text-xl font-black text-yellow-600">💰 <span id="balance">500.00</span></div>
+                <div class="flex items-center gap-1 text-xl font-black text-yellow-600">💰 <span id="balance">500</span></div>
             </div>
         </div>
         <div class="text-right border-l border-[#8b5e3c] pl-3">
@@ -36,13 +36,12 @@
 
         <div id="tab-task" class="hidden space-y-4">
             <div class="bg-glass p-5 rounded-3xl border border-yellow-500/30">
-                <h3 class="text-xs text-yellow-400 mb-2 uppercase tracking-widest">🎁 Nhập mã quà tặng</h3>
+                <h3 class="text-xs text-yellow-400 mb-2 uppercase tracking-widest">🎁 Nhập Giftcode</h3>
                 <div class="flex gap-2">
                     <input type="text" id="giftcode-input" placeholder="NHẬP MÃ..." class="flex-1 bg-black/40 p-3 rounded-xl text-xs outline-none border border-white/10 uppercase">
-                    <button onclick="redeemCode()" class="bg-yellow-500 text-[#4a2e19] px-4 rounded-xl text-xs font-black active:scale-95 transition">NHẬN</button>
+                    <button onclick="redeemCode()" class="bg-yellow-500 text-[#4a2e19] px-4 rounded-xl text-xs font-black">NHẬN</button>
                 </div>
             </div>
-            
             <div class="bg-glass p-5 rounded-3xl space-y-3">
                 <h3 class="text-xs uppercase text-blue-300">Nhiệm vụ cộng đồng</h3>
                 <div class="flex justify-between items-center bg-black/20 p-3 rounded-2xl">
@@ -57,47 +56,45 @@
         </div>
 
         <div id="tab-ref" class="hidden space-y-4 text-center">
-            <div class="bg-glass p-6 rounded-3xl border border-white/20 shadow-2xl">
+            <div class="bg-glass p-6 rounded-3xl border border-white/20 shadow-xl">
                 <h2 class="text-xl font-black mb-2 text-yellow-300">👥 MỜI BẠN BÈ</h2>
-                <p class="text-[11px] opacity-80 mb-4">Tặng 200 vàng cho người mời.<br>Nhận 10% khi bạn bè mua thợ đào.</p>
+                <p class="text-[11px] opacity-80 mb-4">Thưởng 200 vàng/lượt mời thành công.</p>
                 <input id="ref-url" readonly class="w-full bg-black/40 p-3 rounded-2xl text-[10px] outline-none text-center mb-3 font-mono border border-white/10">
-                <button onclick="copyLink()" class="w-full bg-yellow-500 text-[#4a2e19] py-4 rounded-2xl font-black shadow-lg">SAO CHÉP LIÊN KẾT</button>
+                <button onclick="copyLink()" class="w-full bg-yellow-500 text-[#4a2e19] py-3 rounded-2xl font-black">SAO CHÉP LIÊN KẾT</button>
             </div>
         </div>
 
-        <div id="tab-draw" class="hidden space-y-4">
-            <div class="bg-glass p-6 rounded-3xl space-y-3 border border-white/20 text-center shadow-2xl">
-                <p class="text-xs text-yellow-200">Tỉ lệ: 10.000 Vàng = 5.000 VND</p>
-                <input type="text" id="draw-info" placeholder="Ngân hàng | STK | Tên" class="w-full p-4 rounded-xl bg-black/30 outline-none text-xs border border-white/10">
-                <input type="number" id="draw-gold" oninput="updateVnd(this.value)" placeholder="Số vàng muốn rút" class="w-full p-4 rounded-xl bg-black/30 outline-none text-xs border border-white/10">
-                <p class="text-yellow-400 text-sm font-black py-2">Nhận về: <span id="vnd-preview">0</span> VND</p>
-                <button onclick="withdraw()" class="w-full bg-orange-600 py-4 rounded-2xl font-black shadow-lg active:scale-95 transition">GỬI YÊU CẦU RÚT</button>
+        <div id="tab-draw" class="hidden space-y-4 text-center">
+            <div class="bg-glass p-6 rounded-3xl space-y-3 border border-white/20">
+                <p class="text-[10px] text-yellow-200 uppercase">Tỉ lệ: 100.000 Vàng = 5.000 VND</p>
+                <p class="text-[9px] text-red-300 italic">Rút tối thiểu: 100.000 vàng</p>
+                <input type="text" id="draw-info" placeholder="Ngân hàng | STK | Tên" class="w-full p-3 rounded-xl bg-black/30 outline-none text-xs border border-white/10">
+                <input type="number" id="draw-gold" oninput="updateVnd(this.value)" placeholder="Số vàng muốn rút" class="w-full p-3 rounded-xl bg-black/30 outline-none text-xs border border-white/10">
+                <p class="text-yellow-400 text-sm font-black py-2">Bạn sẽ nhận: <span id="vnd-preview">0</span> VND</p>
+                <button onclick="withdraw()" class="w-full bg-orange-600 py-4 rounded-2xl font-black shadow-lg active:scale-95 transition">XÁC NHẬN RÚT</button>
             </div>
         </div>
 
-        <div id="tab-admin" class="hidden space-y-4 pb-10 animate-fade-in">
+        <div id="tab-admin" class="hidden space-y-4 pb-10">
             <div class="bg-red-900/40 p-5 rounded-3xl border border-red-500/50">
-                <h2 class="text-center text-red-400 font-black mb-4 tracking-widest">QUẢN TRỊ VIÊN</h2>
-                
-                <div class="bg-black/20 p-3 rounded-xl mb-4 space-y-2 border border-white/5">
-                    <p class="text-[10px] text-yellow-500">TẠO GIFTCODE:</p>
-                    <input type="text" id="admin-code" placeholder="MÃ (VD: QUATANG)" class="w-full p-2 rounded bg-black/40 text-xs outline-none">
-                    <input type="number" id="admin-code-val" placeholder="Số vàng tặng" class="w-full p-2 rounded bg-black/40 text-xs outline-none">
-                    <input type="number" id="admin-code-limit" placeholder="Số lượt nhập" class="w-full p-2 rounded bg-black/40 text-xs outline-none">
+                <h2 class="text-center text-red-400 font-black mb-4">QUẢN TRỊ VIÊN</h2>
+                <div class="bg-black/20 p-3 rounded-xl mb-4 border border-white/5">
+                    <p class="text-[10px] text-yellow-500 mb-2">TẠO GIFTCODE:</p>
+                    <input type="text" id="admin-code" placeholder="Mã quà tặng" class="w-full p-2 mb-2 rounded bg-black/40 text-xs uppercase outline-none">
+                    <input type="number" id="admin-code-val" placeholder="Số vàng tặng" class="w-full p-2 mb-2 rounded bg-black/40 text-xs outline-none">
+                    <input type="number" id="admin-code-limit" placeholder="Số lượt nhập" class="w-full p-2 mb-2 rounded bg-black/40 text-xs outline-none">
                     <button onclick="createGiftcode()" class="w-full bg-yellow-600 py-2 rounded text-xs font-black">XÁC NHẬN TẠO</button>
                 </div>
-
-                <div class="bg-black/20 p-3 rounded-xl mb-4 space-y-2 border border-white/5">
-                    <p class="text-[10px] text-blue-400">CHỈNH SỐ DƯ (UID):</p>
-                    <input type="text" id="admin-uid" placeholder="UID người chơi" class="w-full p-2 rounded bg-black/40 text-xs outline-none">
-                    <input type="number" id="admin-amount" placeholder="Số vàng" class="w-full p-2 rounded bg-black/40 text-xs outline-none">
+                <div class="bg-black/20 p-3 rounded-xl mb-4 border border-white/5">
+                    <p class="text-[10px] text-blue-400 mb-2">SỬA SỐ DƯ (UID):</p>
+                    <input type="text" id="admin-uid" placeholder="UID người chơi" class="w-full p-2 mb-2 rounded bg-black/40 text-xs outline-none">
+                    <input type="number" id="admin-amount" placeholder="Số vàng" class="w-full p-2 mb-2 rounded bg-black/40 text-xs outline-none">
                     <div class="flex gap-2">
                         <button onclick="adminAdjust(true)" class="flex-1 bg-green-600 py-2 rounded text-xs font-bold">CỘNG (+)</button>
                         <button onclick="adminAdjust(false)" class="flex-1 bg-red-600 py-2 rounded text-xs font-bold">TRỪ (-)</button>
                     </div>
                 </div>
-
-                <p class="text-[10px] text-green-400 mb-2">YÊU CẦU RÚT TIỀN ĐANG CHỜ:</p>
+                <p class="text-[10px] text-green-400 mb-2 uppercase">Lệnh rút chờ duyệt:</p>
                 <div id="admin-withdraw-list" class="space-y-2"></div>
             </div>
         </div>
