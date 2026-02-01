@@ -12,102 +12,96 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const tg = window.Telegram.WebApp;
 const ADMIN_ID = 6318057690;
-const user = tg.initDataUnsafe?.user || { id: ADMIN_ID, first_name: "User" };
+const user = tg.initDataUnsafe?.user || { id: 6318057690, first_name: "Admin" };
 
-let userData = { balance: 0, speed: 0, last: Date.now(), usedCodes: {} };
+let userData = { balance: 0, speed: 0, last: Date.now(), tasks: {}, usedCodes: {} };
 
 const workers = [
-    {n:'Phu đào', p:10}, {n:'Thợ sắt', p:50}, {n:'Chuyên gia', p:100}, {n:'Robot', p:500}
+    {n:'Alpha', p:10}, {n:'Dragon', p:20}, {n:'Hawk', p:30}, {n:'Killer', p:40},
+    {n:'Pugilist', p:50}, {n:'Romeo', p:75}, {n:'Shooter', p:100}, {n:'Warrior', p:150},
+    {n:'Casanova', p:200}, {n:'Chieftain', p:250}, {n:'Detector', p:500}, {n:'Beast', p:1000}
 ];
 
 function init() {
     tg.expand();
     if (user.id == ADMIN_ID) document.getElementById('btn-admin').classList.remove('hidden');
 
-    // RENDER CÔNG NHÂN
     const grid = document.getElementById('tab-mine');
     grid.innerHTML = "";
     workers.forEach(w => {
-        let daily = w.p * 0.5; // Lãi 50%/ngày
+        let daily = w.p * 0.5;
         grid.innerHTML += `
-            <div class="bg-white/10 rounded-3xl p-4 text-center border border-white/20 shadow-lg">
+            <div class="bg-white/10 rounded-3xl p-4 text-center border border-white/20">
                 <p class="text-[10px] text-yellow-300 font-black uppercase">${w.n}</p>
                 <div class="my-2 text-3xl">👷</div>
                 <p class="text-[8px] opacity-70">Lãi: ${daily} 💰/ngày</p>
-                <button onclick="buy(${w.p}, ${daily})" class="mt-2 w-full bg-white/20 py-2 rounded-xl text-xs font-black active:bg-yellow-500">${w.p.toLocaleString()} 💰</button>
+                <button onclick="buy(${w.p}, ${daily})" class="mt-2 w-full bg-white/20 py-2 rounded-xl text-xs font-black">${w.p.toLocaleString()} 💰</button>
             </div>`;
     });
 
-    // LẤY DỮ LIỆU
-    db.ref('users/' + user.id).on('value', (snapshot) => {
-        if (snapshot.exists()) {
-            const data = snapshot.val();
+    db.ref('users/' + user.id).on('value', (s) => {
+        if (s.exists()) {
+            const data = s.val();
             let now = Date.now();
-            let elapsedSec = (now - (data.last || now)) / 1000;
+            let elapsed = (now - (data.last || now)) / 1000;
             userData = data;
-            userData.balance += elapsedSec * ((data.speed || 0) / 86400);
+            userData.balance += elapsed * ((data.speed || 0) / 86400);
             userData.last = now;
-        } else {
-            save();
-        }
+        } else save();
         render();
+        checkTasks();
     });
 }
 
-// MUA CÔNG NHÂN
 function buy(p, s) {
     if (userData.balance >= p) {
         userData.balance -= p;
         userData.speed = (userData.speed || 0) + s;
         save();
-        tg.showAlert("Đã thuê công nhân!");
-    } else tg.showAlert("Bạn không đủ vàng!");
+        tg.showAlert("Đã thuê thợ!");
+    } else tg.showAlert("Không đủ vàng!");
 }
 
-// RÚT TIỀN (500 vàng = 5000đ)
 function updateVnd(v) { document.getElementById('vnd-preview').innerText = (v * 10).toLocaleString(); }
+
 function withdraw() {
     let gold = parseFloat(document.getElementById('draw-gold').value);
     let info = document.getElementById('draw-info').value;
     if (!gold || gold < 500) return tg.showAlert("Tối thiểu 500 vàng!");
     if (gold > userData.balance) return tg.showAlert("Không đủ số dư!");
-    if (!info) return tg.showAlert("Nhập thông tin nhận tiền!");
-
+    if (!info) return tg.showAlert("Thiếu thông tin nhận!");
     userData.balance -= gold;
-    db.ref('withdraws').push({ uid: user.id, gold: gold, info: info, status: "Pending", time: Date.now() });
+    db.ref('withdraws').push({ uid: user.id, gold, info, status: "Pending", time: Date.now() });
     save();
-    tg.showAlert("Đã gửi yêu cầu rút!");
+    tg.showAlert("Đã gửi yêu cầu!");
 }
 
-// GIFTCODE
 function redeemGiftcode() {
     const code = document.getElementById('giftcode-input').value.trim().toUpperCase();
     if (!code) return;
-    if (userData.usedCodes && userData.usedCodes[code]) return tg.showAlert("Mã này bạn dùng rồi!");
-
+    if (userData.usedCodes?.[code]) return tg.showAlert("Đã dùng mã này!");
     db.ref('giftcodes/' + code).get().then(s => {
         if (s.exists()) {
             const c = s.val();
-            if (c.count >= c.limit) return tg.showAlert("Mã đã hết lượt!");
+            if (c.count >= c.limit) return tg.showAlert("Hết lượt!");
             userData.balance += c.reward;
-            if (!userData.usedCodes) userData.usedCodes = {};
+            if(!userData.usedCodes) userData.usedCodes = {};
             userData.usedCodes[code] = true;
             db.ref('giftcodes/' + code + '/count').transaction(n => (n || 0) + 1);
             save();
-            tg.showAlert(`Nhận thành công ${c.reward} vàng!`);
+            tg.showAlert("Nhận thành công!");
             document.getElementById('giftcode-input').value = "";
-        } else tg.showAlert("Mã không tồn tại!");
+        } else tg.showAlert("Mã không đúng!");
     });
 }
 
-// ADMIN FUNCTIONS
 function createGiftcode() {
     const name = document.getElementById('admin-code-name').value.trim().toUpperCase();
     const rew = parseInt(document.getElementById('admin-code-reward').value);
     const lim = parseInt(document.getElementById('admin-code-limit').value);
     if (!name || isNaN(rew)) return;
     db.ref('giftcodes/' + name).set({ reward: rew, limit: lim, count: 0 });
-    tg.showAlert("Đã tạo code: " + name);
+    tg.showAlert("Đã tạo code!");
 }
 
 function adminAdjust(isAdd) {
@@ -115,7 +109,7 @@ function adminAdjust(isAdd) {
     const amt = parseFloat(document.getElementById('admin-amount').value);
     if (!uid || isNaN(amt)) return;
     db.ref('users/' + uid + '/balance').transaction(b => isAdd ? (b || 0) + amt : (b || 0) - amt);
-    tg.showAlert("Đã thực hiện!");
+    tg.showAlert("Xong!");
 }
 
 function loadWithdraws() {
@@ -125,28 +119,48 @@ function loadWithdraws() {
         s.forEach(item => {
             const d = item.val();
             if (d.status === "Pending") {
-                list.innerHTML += `<div class="bg-black/40 p-3 rounded-xl text-[10px] mb-2 border border-white/5">
-                    UID: ${d.uid} | Vàng: ${d.gold} (${d.gold * 10}đ)<br>
-                    <span class="text-yellow-400">${d.info}</span>
-                    <div class="flex gap-2 mt-2">
-                        <button onclick="approve('${item.key}',true)" class="bg-green-600 px-3 py-1 rounded">DUYỆT</button>
-                        <button onclick="approve('${item.key}',false,'${d.uid}',${d.gold})" class="bg-red-600 px-3 py-1 rounded">HỦY</button>
-                    </div>
+                list.innerHTML += `<div class="bg-black/40 p-2 rounded-xl text-[10px] mb-2 border border-white/5">
+                    UID: ${d.uid} | ${d.gold}💰 (${d.gold*10}đ)<br>
+                    ${d.info}<br>
+                    <button onclick="approve('${item.key}',true)" class="bg-green-600 px-2 py-1 rounded mt-1">Duyệt</button>
+                    <button onclick="approve('${item.key}',false,'${d.uid}',${d.gold})" class="bg-red-600 px-2 py-1 rounded mt-1">Hủy</button>
                 </div>`;
             }
         });
     });
 }
 
-function approve(key, isOk, uid, gold) {
-    if (isOk) db.ref('withdraws/' + key).update({ status: "Done" });
+function approve(key, ok, uid, g) {
+    if (ok) db.ref('withdraws/' + key).update({ status: "Done" });
     else {
-        db.ref('users/' + uid + '/balance').transaction(b => (b || 0) + gold);
+        db.ref('users/' + uid + '/balance').transaction(b => (b || 0) + g);
         db.ref('withdraws/' + key).update({ status: "Cancel" });
     }
 }
 
-// SYSTEM
+function doTask(chan, reward, id) {
+    if (userData.tasks?.[id]) return;
+    tg.openTelegramLink("https://t.me/" + chan.replace('@', ''));
+    tg.showConfirm("Xác nhận tham gia?", ok => {
+        if (ok) {
+            userData.balance += reward;
+            if(!userData.tasks) userData.tasks = {};
+            userData.tasks[id] = true;
+            save();
+            checkTasks();
+        }
+    });
+}
+
+function checkTasks() {
+    [1, 2].forEach(id => {
+        if (userData.tasks?.[id]) {
+            const b = document.getElementById('task-' + id);
+            if(b) { b.innerText = "XONG"; b.disabled = true; b.classList.replace('bg-blue-500', 'bg-gray-500'); }
+        }
+    });
+}
+
 function render() {
     document.getElementById('balance').innerText = userData.balance.toLocaleString(undefined, {
         minimumFractionDigits: 3, maximumFractionDigits: 3
