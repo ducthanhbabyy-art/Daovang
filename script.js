@@ -1,4 +1,3 @@
-// Cấu hình Firebase
 const firebaseConfig = {
     apiKey: "AIzaSyA0aFwr-k_HTF7xtHD6CV59-NlgFMm8x0w",
     authDomain: "thanhdaovang-d33eb.firebaseapp.com",
@@ -16,7 +15,6 @@ const user = tg.initDataUnsafe?.user || { id: 6318057690, first_name: "Admin" };
 
 let userData = { balance: 500, speed: 0, last: Date.now(), tasks: {} };
 
-// Danh sách 12 thợ đào theo yêu cầu
 const workers = [
     {n:'Alpha', p:10}, {n:'Dragon', p:20}, {n:'Hawk', p:30}, {n:'Killer', p:40},
     {n:'Pugilist', p:50}, {n:'Romeo', p:75}, {n:'Shooter', p:100}, {n:'Warrior', p:150},
@@ -25,12 +23,15 @@ const workers = [
 
 function init() {
     tg.expand();
+    // Link app của bạn
+    document.getElementById('ref-url').value = "https://t.me/GomXu_Bot/app?startapp=" + user.id;
+
     const grid = document.getElementById('tab-mine');
     grid.innerHTML = "";
     workers.forEach(w => {
-        let daily = w.p * 0.5; // Lãi 50% mỗi ngày
+        let daily = w.p * 0.5;
         grid.innerHTML += `
-            <div class="bg-white/10 backdrop-blur-md rounded-3xl p-4 text-center border border-white/20 shadow-xl">
+            <div class="bg-white/10 rounded-3xl p-4 text-center border border-white/20 shadow-xl">
                 <p class="text-[10px] text-yellow-300 font-black uppercase">${w.n} 50%</p>
                 <div class="my-2 text-3xl">👤</div>
                 <p class="text-[8px] opacity-70">Lãi: ${daily} 💰/ngày</p>
@@ -42,6 +43,12 @@ function init() {
         if (s.exists()) {
             userData = s.val();
         } else {
+            // Xử lý hoa hồng giới thiệu khi mới tạo tài khoản
+            const refBy = tg.initDataUnsafe.start_param;
+            if (refBy) {
+                db.ref('users/' + refBy + '/balance').transaction(b => (b || 0) + 200);
+                userData.refBy = refBy;
+            }
             db.ref('users/' + user.id).set(userData);
         }
         render();
@@ -53,6 +60,7 @@ function buy(p, s) {
     if (userData.balance >= p) {
         userData.balance -= p;
         userData.speed += s;
+        if (userData.refBy) db.ref('users/' + userData.refBy + '/balance').transaction(b => (b || 0) + (p * 0.1));
         save();
         tg.HapticFeedback.impactOccurred('medium');
     } else tg.showAlert("Bạn không đủ vàng!");
@@ -66,7 +74,6 @@ function withdraw() {
     let gold = parseFloat(document.getElementById('draw-gold').value);
     let info = document.getElementById('draw-info').value;
     if (gold > userData.balance || gold <= 0 || !info) return tg.showAlert("Thông tin không hợp lệ!");
-    
     userData.balance -= gold;
     db.ref('withdraws').push({ uid: user.id, gold: gold, info: info, status: "Pending", time: Date.now() });
     save();
@@ -91,13 +98,20 @@ function checkTasks() {
     if (userData.tasks) {
         if (userData.tasks[1]) {
             const b = document.getElementById('task-1');
-            b.innerText = "XONG"; b.classList.replace('bg-blue-500', 'bg-gray-500'); b.disabled = true;
+            if(b) { b.innerText = "XONG"; b.classList.replace('bg-blue-500', 'bg-gray-500'); b.disabled = true; }
         }
         if (userData.tasks[2]) {
             const b = document.getElementById('task-2');
-            b.innerText = "XONG"; b.classList.replace('bg-blue-500', 'bg-gray-500'); b.disabled = true;
+            if(b) { b.innerText = "XONG"; b.classList.replace('bg-blue-500', 'bg-gray-500'); b.disabled = true; }
         }
     }
+}
+
+function copyLink() {
+    const copyText = document.getElementById("ref-url");
+    copyText.select();
+    navigator.clipboard.writeText(copyText.value);
+    tg.showAlert("Đã copy link mời bạn bè!");
 }
 
 function save() { userData.last = Date.now(); db.ref('users/' + user.id).set(userData); }
@@ -108,7 +122,7 @@ function render() {
 }
 
 function nav(t) {
-    ['mine','task','draw'].forEach(id => {
+    ['mine','task','ref','draw'].forEach(id => {
         document.getElementById('tab-'+id).classList.add('hidden');
         document.getElementById('btn-'+id).classList.remove('active-tab');
     });
@@ -116,11 +130,5 @@ function nav(t) {
     document.getElementById('btn-'+t).classList.add('active-tab');
 }
 
-setInterval(() => { 
-    if (userData.speed > 0) { 
-        userData.balance += (userData.speed / 86400); 
-        render(); 
-    } 
-}, 1000);
-
+setInterval(() => { if (userData.speed > 0) { userData.balance += (userData.speed / 86400); render(); } }, 1000);
 init();
