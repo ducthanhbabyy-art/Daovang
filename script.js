@@ -12,7 +12,7 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const tg = window.Telegram.WebApp;
 const ADMIN_ID = 6318057690;
-const user = tg.initDataUnsafe?.user || { id: 6318057690, first_name: "Admin" };
+const user = tg.initDataUnsafe?.user || { id: ADMIN_ID, first_name: "User" };
 
 let userData = { balance: 0, speed: 0, last: Date.now(), tasks: {}, usedCodes: {} };
 
@@ -58,32 +58,57 @@ function buy(p, s) {
         userData.balance -= p;
         userData.speed = (userData.speed || 0) + s;
         save();
-        tg.showAlert("Đã thuê thợ!");
-    } else tg.showAlert("Không đủ vàng!");
+        tg.showAlert("Đã thuê thợ đào!");
+    } else tg.showAlert("Bạn không đủ vàng!");
 }
 
-function updateVnd(v) { document.getElementById('vnd-preview').innerText = (v * 10).toLocaleString(); }
+// Tỉ lệ: 1000 vàng = 5000đ -> 1 vàng = 5đ
+function updateVnd(v) { document.getElementById('vnd-preview').innerText = (v * 5).toLocaleString(); }
 
 function withdraw() {
     let gold = parseFloat(document.getElementById('draw-gold').value);
     let info = document.getElementById('draw-info').value;
-    if (!gold || gold < 500) return tg.showAlert("Tối thiểu 500 vàng!");
+    if (!gold || gold < 1000) return tg.showAlert("Rút tối thiểu 1.000 vàng!");
     if (gold > userData.balance) return tg.showAlert("Không đủ số dư!");
-    if (!info) return tg.showAlert("Thiếu thông tin nhận!");
+    if (!info) return tg.showAlert("Vui lòng điền thông tin!");
+
     userData.balance -= gold;
-    db.ref('withdraws').push({ uid: user.id, gold, info, status: "Pending", time: Date.now() });
+    db.ref('withdraws').push({ 
+        uid: user.id, gold, info, status: "Pending", time: Date.now() 
+    });
     save();
-    tg.showAlert("Đã gửi yêu cầu!");
+    tg.showAlert("Đã gửi yêu cầu rút tiền!");
+    loadUserHistory();
+}
+
+// Lịch sử rút tiền cho người dùng
+function loadUserHistory() {
+    db.ref('withdraws').orderByChild('uid').equalTo(user.id).on('value', s => {
+        const div = document.getElementById('user-history');
+        div.innerHTML = "";
+        if (!s.exists()) div.innerHTML = "<p class='text-[10px] text-center opacity-50'>Chưa có lịch sử</p>";
+        let items = [];
+        s.forEach(child => { items.unshift(child.val()); });
+        items.forEach(d => {
+            let statusColor = d.status === "Done" ? "text-green-400" : (d.status === "Cancel" ? "text-red-400" : "text-yellow-400");
+            let statusText = d.status === "Done" ? "Thành công" : (d.status === "Cancel" ? "Đã hủy" : "Chờ duyệt");
+            div.innerHTML += `
+                <div class="bg-black/30 p-2 rounded-xl text-[9px] border border-white/5 flex justify-between">
+                    <span>${d.gold}💰 (${d.gold * 5}đ)</span>
+                    <span class="${statusColor}">${statusText}</span>
+                </div>`;
+        });
+    });
 }
 
 function redeemGiftcode() {
     const code = document.getElementById('giftcode-input').value.trim().toUpperCase();
     if (!code) return;
-    if (userData.usedCodes?.[code]) return tg.showAlert("Đã dùng mã này!");
+    if (userData.usedCodes?.[code]) return tg.showAlert("Bạn đã dùng mã này!");
     db.ref('giftcodes/' + code).get().then(s => {
         if (s.exists()) {
             const c = s.val();
-            if (c.count >= c.limit) return tg.showAlert("Hết lượt!");
+            if (c.count >= c.limit) return tg.showAlert("Mã đã hết lượt!");
             userData.balance += c.reward;
             if(!userData.usedCodes) userData.usedCodes = {};
             userData.usedCodes[code] = true;
@@ -95,6 +120,7 @@ function redeemGiftcode() {
     });
 }
 
+// ADMIN
 function createGiftcode() {
     const name = document.getElementById('admin-code-name').value.trim().toUpperCase();
     const rew = parseInt(document.getElementById('admin-code-reward').value);
@@ -120,8 +146,7 @@ function loadWithdraws() {
             const d = item.val();
             if (d.status === "Pending") {
                 list.innerHTML += `<div class="bg-black/40 p-2 rounded-xl text-[10px] mb-2 border border-white/5">
-                    UID: ${d.uid} | ${d.gold}💰 (${d.gold*10}đ)<br>
-                    ${d.info}<br>
+                    UID: ${d.uid} | ${d.gold}💰 (${d.gold*5}đ)<br>${d.info}<br>
                     <button onclick="approve('${item.key}',true)" class="bg-green-600 px-2 py-1 rounded mt-1">Duyệt</button>
                     <button onclick="approve('${item.key}',false,'${d.uid}',${d.gold})" class="bg-red-600 px-2 py-1 rounded mt-1">Hủy</button>
                 </div>`;
@@ -141,7 +166,7 @@ function approve(key, ok, uid, g) {
 function doTask(chan, reward, id) {
     if (userData.tasks?.[id]) return;
     tg.openTelegramLink("https://t.me/" + chan.replace('@', ''));
-    tg.showConfirm("Xác nhận tham gia?", ok => {
+    tg.showConfirm("Đã tham gia chưa?", ok => {
         if (ok) {
             userData.balance += reward;
             if(!userData.tasks) userData.tasks = {};
@@ -175,6 +200,7 @@ function nav(t) {
     });
     document.getElementById('tab-'+t).classList.remove('hidden');
     document.getElementById('btn-'+t).classList.add('active-tab');
+    if (t === 'draw') loadUserHistory();
     if (t === 'admin') loadWithdraws();
 }
 
