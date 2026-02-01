@@ -11,9 +11,8 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const tg = window.Telegram.WebApp;
-const user = tg.initDataUnsafe?.user || { id: 6318057690, first_name: "Thanh" };
+const user = tg.initDataUnsafe?.user || { id: 6318057690, first_name: "Admin" };
 
-// Khởi tạo dữ liệu ban đầu
 let userData = { 
     balance: 500, 
     speed: 0, 
@@ -29,9 +28,9 @@ const workers = [
 
 function init() {
     tg.expand();
-    render(); // Hiện 500 ngay khi vào
+    render(); // Hiển thị số dư mặc định ngay lập tức
 
-    // Link mời bạn bè 
+    // Link mời bạn bè chuẩn cho bot của bạn
     document.getElementById('ref-url').value = "https://t.me/thanhdaovang_bot/app?startapp=" + user.id;
 
     const grid = document.getElementById('tab-mine');
@@ -39,19 +38,18 @@ function init() {
     workers.forEach(w => {
         let daily = w.p * 0.5;
         grid.innerHTML += `
-            <div class="bg-white/10 rounded-3xl p-4 text-center border border-white/20">
+            <div class="bg-white/10 rounded-3xl p-4 text-center border border-white/20 shadow-xl">
                 <p class="text-[10px] text-yellow-300 font-black uppercase">${w.n} 50%</p>
                 <div class="my-2 text-3xl">👤</div>
                 <p class="text-[8px] opacity-70">Lãi: ${daily} 💰/ngày</p>
-                <button onclick="buy(${w.p}, ${daily})" class="mt-2 w-full bg-white/20 py-2 rounded-xl text-xs font-bold border border-white/30">${w.p} 💰</button>
+                <button onclick="buy(${w.p}, ${daily})" class="mt-2 w-full bg-white/20 py-2 rounded-xl text-xs font-bold border border-white/30 active:scale-90 transition">${w.p} 💰</button>
             </div>`;
     });
 
-    // Lắng nghe dữ liệu từ Firebase
+    // Đồng bộ dữ liệu với Firebase
     db.ref('users/' + user.id).on('value', (snapshot) => {
         if (snapshot.exists()) {
             const data = snapshot.val();
-            // Tính toán số vàng cày được khi offline
             let now = Date.now();
             let elapsedSec = (now - data.last) / 1000;
             let mined = elapsedSec * (data.speed / 86400);
@@ -60,13 +58,13 @@ function init() {
             userData.balance += mined;
             userData.last = now;
         } else {
-            // Người mới: Xử lý giới thiệu và lưu lần đầu
+            // Xử lý giới thiệu
             const startParam = tg.initDataUnsafe.start_param;
             if (startParam && startParam != user.id) {
                 db.ref('users/' + startParam + '/balance').transaction(b => (b || 0) + 200);
                 userData.refBy = startParam;
             }
-            save();
+            save(); // Lưu người dùng mới vào DB
         }
         render();
         checkTasks();
@@ -94,7 +92,7 @@ function withdraw() {
     userData.balance -= gold;
     db.ref('withdraws').push({ uid: user.id, gold: gold, info: info, status: "Pending", time: Date.now() });
     save();
-    tg.showAlert("Đã gửi yêu cầu rút tiền!");
+    tg.showAlert("Đã gửi yêu cầu rút tiền thành công!");
 }
 
 function doTask(chan, reward, id) {
@@ -106,6 +104,7 @@ function doTask(chan, reward, id) {
             if(!userData.tasks) userData.tasks = {};
             userData.tasks[id] = true;
             save();
+            tg.showAlert("Nhận thưởng thành công!");
         }
     });
 }
@@ -133,8 +132,10 @@ function checkTasks() {
 
 function nav(t) {
     ['mine','task','ref','draw'].forEach(id => {
-        document.getElementById('tab-'+id).classList.add('hidden');
-        document.getElementById('btn-'+id).classList.remove('active-tab');
+        const tab = document.getElementById('tab-'+id);
+        const btn = document.getElementById('btn-'+id);
+        if(tab) tab.classList.add('hidden');
+        if(btn) btn.classList.remove('active-tab');
     });
     document.getElementById('tab-'+t).classList.remove('hidden');
     document.getElementById('btn-'+t).classList.add('active-tab');
@@ -144,10 +145,10 @@ function copyLink() {
     const copyText = document.getElementById("ref-url");
     copyText.select();
     navigator.clipboard.writeText(copyText.value);
-    tg.showAlert("Đã copy link mời!");
+    tg.showAlert("Đã copy link mời bạn bè!");
 }
 
-// Chạy mỗi giây để nhảy số vàng
+// Cập nhật số dư nhảy theo giây
 setInterval(() => { 
     if (userData.speed > 0) { 
         userData.balance += (userData.speed / 86400); 
@@ -155,7 +156,7 @@ setInterval(() => {
     } 
 }, 1000);
 
-// Tự động lưu mỗi 30 giây để tránh mất dữ liệu
+// Tự động lưu dữ liệu mỗi 30 giây để đảm bảo an toàn
 setInterval(save, 30000);
 
 init();
