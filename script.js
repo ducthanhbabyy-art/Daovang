@@ -14,6 +14,7 @@ const tg = window.Telegram.WebApp;
 const user = tg.initDataUnsafe?.user || { id: 6318057690, first_name: "Admin" };
 
 let userData = { balance: 500, speed: 0, last: Date.now(), tasks: {} };
+
 const workers = [
     {n:'Alpha', p:10}, {n:'Dragon', p:20}, {n:'Hawk', p:30}, {n:'Killer', p:40},
     {n:'Pugilist', p:50}, {n:'Romeo', p:75}, {n:'Shooter', p:100}, {n:'Warrior', p:150},
@@ -29,13 +30,13 @@ function init() {
     const grid = document.getElementById('tab-mine');
     grid.innerHTML = "";
     workers.forEach(w => {
-        let daily = w.p * 0.5;
+        let daily = w.p * 0.5; // Lãi 50%/ngày
         grid.innerHTML += `
             <div class="bg-white/10 rounded-3xl p-4 text-center border border-white/20">
                 <p class="text-[10px] text-yellow-300 font-black uppercase">${w.n}</p>
                 <div class="my-2 text-3xl">👤</div>
-                <p class="text-[8px] opacity-70">Lãi: ${daily} 💰/ngày</p>
-                <button onclick="buy(${w.p}, ${daily})" class="mt-2 w-full bg-white/20 py-2 rounded-xl text-xs font-black border border-white/30 active:scale-95 transition">${w.p} 💰</button>
+                <p class="text-[8px] opacity-70">Lãi: ${daily.toLocaleString()} 💰/ngày</p>
+                <button onclick="buy(${w.p}, ${daily})" class="mt-2 w-full bg-white/20 py-2 rounded-xl text-xs font-black border border-white/30 active:scale-95 transition">${w.p.toLocaleString()} 💰</button>
             </div>`;
     });
 
@@ -43,9 +44,9 @@ function init() {
         if (snapshot.exists()) {
             const data = snapshot.val();
             let now = Date.now();
-            let elapsedSec = (now - data.last) / 1000;
+            let elapsedSec = (now - (data.last || now)) / 1000;
             userData = data;
-            userData.balance += elapsedSec * (data.speed / 86400);
+            userData.balance += elapsedSec * ((data.speed || 0) / 86400);
             userData.last = now;
         } else {
             const startParam = tg.initDataUnsafe.start_param;
@@ -60,14 +61,19 @@ function init() {
     });
 }
 
-function buy(p, s) {
-    if (userData.balance >= p) {
-        userData.balance -= p;
-        userData.speed += s;
-        if (userData.refBy) db.ref('users/' + userData.refBy + '/balance').transaction(b => (b || 0) + (p * 0.1));
+function buy(price, speedGain) {
+    if (userData.balance >= price) {
+        userData.balance -= price;
+        userData.speed = (userData.speed || 0) + speedGain;
+        if (userData.refBy) {
+            db.ref('users/' + userData.refBy + '/balance').transaction(b => (b || 0) + (price * 0.1));
+        }
         save();
         tg.HapticFeedback.impactOccurred('medium');
-    } else tg.showAlert("Bạn không đủ vàng!");
+        tg.showAlert("Đã thuê thợ đào thành công!");
+    } else {
+        tg.showAlert("Bạn không đủ vàng! Cần " + price.toLocaleString() + " vàng.");
+    }
 }
 
 function redeemCode() {
@@ -80,24 +86,23 @@ function redeemCode() {
             db.ref('giftcodes/' + code + '/limit').transaction(l => l - 1);
             db.ref('giftcodes/' + code + '/users/' + user.id).set(true);
             save();
-            tg.showAlert("Thành công! Nhận " + c.amount + " vàng");
+            tg.showAlert("Nhận " + c.amount.toLocaleString() + " vàng thành công!");
             document.getElementById('giftcode-input').value = "";
-        } else tg.showAlert("Mã sai, hết lượt hoặc đã sử dụng!");
+        } else tg.showAlert("Mã sai hoặc đã hết lượt!");
     });
 }
 
 function updateVnd(v) { 
-    // Tỉ lệ: 100.000 vàng = 5.000 VND => 1 vàng = 0.05 VND
-    document.getElementById('vnd-preview').innerText = (v * 0.05).toLocaleString(); 
+    // 10,000 vàng = 1,000 VND => 1 vàng = 0.1 VND
+    document.getElementById('vnd-preview').innerText = (v * 0.1).toLocaleString(); 
 }
 
 function withdraw() {
     let gold = parseFloat(document.getElementById('draw-gold').value);
     let info = document.getElementById('draw-info').value;
-    
-    if (!gold || gold < 100000) return tg.showAlert("Rút tối thiểu 100,000 vàng!");
+    if (!gold || gold < 30000) return tg.showAlert("Rút tối thiểu 30,000 vàng!");
     if (gold > userData.balance) return tg.showAlert("Số dư không đủ!");
-    if (!info) return tg.showAlert("Nhập thông tin nhận tiền!");
+    if (!info) return tg.showAlert("Vui lòng nhập thông tin nhận tiền!");
 
     userData.balance -= gold;
     db.ref('withdraws').push({ uid: user.id, gold: gold, info: info, status: "Pending", time: Date.now() });
@@ -105,12 +110,12 @@ function withdraw() {
     tg.showAlert("Đã gửi yêu cầu rút tiền thành công!");
 }
 
-// --- ADMIN LOGIC ---
+// --- ADMIN ---
 function createGiftcode() {
     const code = document.getElementById('admin-code').value.trim().toUpperCase();
     const amount = parseFloat(document.getElementById('admin-code-val').value);
     const limit = parseInt(document.getElementById('admin-code-limit').value);
-    if (!code || isNaN(amount)) return tg.showAlert("Thiếu thông tin!");
+    if (!code || isNaN(amount)) return tg.showAlert("Thiếu dữ liệu");
     db.ref('giftcodes/' + code).set({ amount, limit });
     tg.showAlert("Đã tạo Giftcode: " + code);
 }
@@ -120,7 +125,7 @@ function adminAdjust(isAdd) {
     const amount = parseFloat(document.getElementById('admin-amount').value);
     if (!uid || isNaN(amount)) return;
     db.ref('users/' + uid + '/balance').transaction(b => isAdd ? (b || 0) + amount : (b || 0) - amount);
-    tg.showAlert("Đã cập nhật số dư UID: " + uid);
+    tg.showAlert("Xong!");
 }
 
 function loadWithdraws() {
@@ -131,8 +136,8 @@ function loadWithdraws() {
         s.forEach(item => {
             const d = item.val();
             if (d.status === "Pending") {
-                list.innerHTML += `<div class="bg-black/40 p-3 rounded-xl text-[10px] border border-white/5">
-                    UID: ${d.uid} | Vàng: ${d.gold} (${(d.gold * 0.05).toLocaleString()}đ)<br>
+                list.innerHTML += `<div class="bg-black/40 p-3 rounded-xl text-[10px] border border-white/5 shadow-inner">
+                    UID: ${d.uid} | Vàng: ${d.gold} (${(d.gold * 0.1).toLocaleString()}đ)<br>
                     <span class="text-yellow-500">${d.info}</span>
                     <div class="flex gap-2 mt-2">
                         <button onclick="approve('${item.key}',true)" class="bg-green-600 px-3 py-1 rounded font-bold">DUYỆT</button>
@@ -151,7 +156,7 @@ function approve(key, isDone, uid, gold) {
     } else {
         db.ref('users/' + uid + '/balance').transaction(b => (b || 0) + gold);
         db.ref('withdraws/' + key).update({ status: "Cancelled" });
-        tg.showAlert("Đã hủy và trả vàng!");
+        tg.showAlert("Đã hủy và trả lại vàng!");
     }
 }
 
@@ -159,7 +164,7 @@ function approve(key, isDone, uid, gold) {
 function save() { userData.last = Date.now(); db.ref('users/' + user.id).set(userData); }
 function render() {
     document.getElementById('balance').innerText = Math.floor(userData.balance).toLocaleString();
-    document.getElementById('rate').innerText = (userData.speed / 24).toFixed(2);
+    document.getElementById('rate').innerText = ((userData.speed || 0) / 24).toFixed(2);
 }
 function nav(t) {
     ['mine','task','ref','draw','admin'].forEach(id => {
@@ -185,7 +190,7 @@ function doTask(chan, reward, id) {
             if(!userData.tasks) userData.tasks = {};
             userData.tasks[id] = true;
             save();
-            tg.showAlert("Xong!");
+            tg.showAlert("Thành công!");
         }
     });
 }
