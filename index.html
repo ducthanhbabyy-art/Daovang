@@ -9,84 +9,56 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <style>
-        .active-tab { color: #facc15; border-top: 2px solid #facc15; font-weight: 900; }
+        .active-tab { color: #facc15; border-top: 3px solid #facc15; font-weight: 900; }
         .bg-main { background: linear-gradient(to bottom, #008f5a, #d2b48c); }
-        input::placeholder { color: rgba(255,255,255,0.5); }
     </style>
 </head>
 <body class="bg-main min-h-screen p-4 pb-24 font-bold text-white select-none">
-
     <div class="sticky top-0 z-50 bg-[#fff8e7] border-4 border-[#8b5e3c] p-3 rounded-2xl shadow-xl flex justify-between items-center mb-6 text-[#4a2e19]">
-        <div>
-            <span class="text-[10px] opacity-70 uppercase tracking-tighter">Số dư vàng</span>
-            <div class="flex items-center gap-1 text-xl font-black text-yellow-600">💰 <span id="balance">500.00</span></div>
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-orange-500 rounded-full border-2 border-white"></div>
+            <div>
+                <span class="text-[10px] opacity-70 uppercase">Tài khoản</span>
+                <div class="flex items-center gap-1 text-sm font-black text-yellow-600">💰 <span id="balance">0</span></div>
+            </div>
         </div>
-        <div class="text-right border-l border-[#8b5e3c] pl-3">
-            <p class="text-[10px] text-green-700">⚡ +<span id="rate">0</span>/h</p>
+        <div class="text-right">
             <p class="text-[10px] text-blue-600 font-bold">💎 <span id="diamonds">0</span></p>
         </div>
     </div>
 
-    <div id="main-content">
-        <div id="tab-mine" class="grid grid-cols-2 gap-3 animate-fade-in"></div>
+    <div id="content">
+        <div id="tab-mine" class="grid grid-cols-2 gap-3"></div>
 
         <div id="tab-task" class="hidden space-y-4">
-            <div class="bg-white/10 backdrop-blur-md p-5 rounded-3xl border border-white/20">
-                <h3 class="mb-3 flex items-center gap-2">🎁 Nhập Giftcode</h3>
-                <div class="flex gap-2">
-                    <input id="gift-in" placeholder="NHẬP MÃ TẠI ĐÂY..." class="flex-1 bg-black/20 p-3 rounded-xl text-xs uppercase outline-none">
-                    <button onclick="useGift()" class="bg-yellow-500 px-6 rounded-xl text-[#4a2e19] font-black shadow-lg">NHẬN</button>
+            <div class="bg-white/10 p-5 rounded-3xl border border-white/20 space-y-3">
+                <h3 class="text-xs uppercase opacity-70">🎁 Nhiệm vụ nhận vàng</h3>
+                <div class="bg-black/20 p-3 rounded-2xl border border-white/10 flex justify-between items-center">
+                    <p class="text-[11px]">Join @chatcunggau</p>
+                    <button id="task-1" onclick="doTask('@chatcunggau', 100, 1)" class="bg-blue-500 px-4 py-2 rounded-xl text-[10px]">100 💰</button>
                 </div>
-            </div>
-            <div class="bg-white/10 backdrop-blur-md p-5 rounded-3xl border border-white/20 space-y-3">
-                <h3 class="mb-1 uppercase text-xs opacity-70">Nhiệm vụ cộng đồng</h3>
-                <button onclick="window.open('https://t.me/chatcunggau')" class="w-full bg-blue-500 py-3 rounded-2xl text-xs flex justify-between px-4"><span>Join @chatcunggau</span> <span>+100 💰</span></button>
-                <button onclick="window.open('https://t.me/baokmcunggau')" class="w-full bg-blue-700 py-3 rounded-2xl text-xs flex justify-between px-4"><span>Join @baokmcunggau</span> <span>+150 💰</span></button>
-            </div>
-        </div>
-
-        <div id="tab-ref" class="hidden text-center space-y-4">
-            <div class="bg-white/10 p-6 rounded-3xl border border-white/20">
-                <p class="text-lg">👥 Mời Bạn Bè</p>
-                <p class="text-[10px] opacity-80 mt-2">Tặng 200 vàng cho người mời.<br>Nhận 10% hoa hồng khi cấp dưới mua thợ.</p>
-                <input id="ref-url" readonly class="w-full bg-black/30 p-3 mt-4 rounded-xl text-[10px] text-center">
-                <button onclick="copyLink()" class="mt-3 bg-green-500 w-full py-3 rounded-2xl font-black">COPY LINK</button>
+                <div class="bg-black/20 p-3 rounded-2xl border border-white/10 flex justify-between items-center">
+                    <p class="text-[11px]">Join @baokmcunggau</p>
+                    <button id="task-2" onclick="doTask('@baokmcunggau', 150, 2)" class="bg-blue-500 px-4 py-2 rounded-xl text-[10px]">150 💰</button>
+                </div>
             </div>
         </div>
 
         <div id="tab-draw" class="hidden space-y-4">
-            <div class="bg-white/10 p-5 rounded-3xl border border-white/20 space-y-3 text-center">
-                <p class="text-sm">Tỷ lệ: 5.000 Vàng = 1.000 VND</p>
-                <input type="text" id="draw-info" placeholder="Ngân hàng | STK | Tên" class="w-full p-3 rounded-xl bg-black/20 text-xs outline-none">
-                <input type="number" id="draw-gold" oninput="updateVnd(this.value)" placeholder="Số vàng muốn rút (Min 25k)" class="w-full p-3 rounded-xl bg-black/20 text-xs outline-none">
-                <div class="text-yellow-300 text-xs">Bạn sẽ nhận: <span id="vnd-preview">0</span> VND</div>
-                <button onclick="withdraw()" class="w-full bg-orange-500 py-4 rounded-full font-black shadow-xl">RÚT TIỀN</button>
+            <div class="bg-white/10 p-5 rounded-3xl border border-white/20 space-y-3">
+                <input type="text" id="bank-info" placeholder="Ngân hàng | STK | Tên" class="w-full p-3 rounded-xl bg-black/20 text-xs outline-none">
+                <input type="number" id="draw-gold" oninput="updateVnd(this.value)" placeholder="Số vàng muốn rút" class="w-full p-3 rounded-xl bg-black/20 text-xs outline-none">
+                <p class="text-center text-xs text-yellow-300">Nhận: <span id="vnd-preview">0</span> VND</p>
+                <button onclick="withdraw()" class="w-full bg-orange-500 py-4 rounded-2xl font-black">RÚT TIỀN</button>
             </div>
         </div>
     </div>
 
-    <div id="adm-box" class="hidden mt-8 p-5 bg-red-900/80 rounded-3xl border-2 border-red-400 space-y-3">
-        <p class="text-center text-[10px] font-black underline">BẢNG QUẢN TRỊ</p>
-        <div class="flex gap-2">
-            <input id="adm-uid" placeholder="User ID" class="w-1/2 p-2 rounded bg-white text-black text-xs">
-            <input id="adm-amt" placeholder="Vàng +" class="w-1/2 p-2 rounded bg-white text-black text-xs">
-        </div>
-        <button onclick="admAdd()" class="w-full bg-blue-600 py-2 rounded-xl text-xs">CỘNG VÀNG</button>
-        <div class="grid grid-cols-3 gap-1">
-            <input id="g-code" placeholder="Code" class="p-2 rounded bg-white text-black text-[9px] uppercase">
-            <input id="g-val" placeholder="Vàng" class="p-2 rounded bg-white text-black text-[9px]">
-            <input id="g-lim" placeholder="Slot" class="p-2 rounded bg-white text-black text-[9px]">
-        </div>
-        <button onclick="admGift()" class="w-full bg-green-600 py-2 rounded-xl text-xs">TẠO GIFTCODE</button>
+    <div class="fixed bottom-0 left-0 right-0 bg-[#8b5e3c] h-16 flex justify-around items-center border-t-2 border-yellow-600">
+        <button onclick="nav('mine')" id="btn-mine" class="flex flex-col items-center text-[10px] active-tab"><span>⛏️</span>Đào</button>
+        <button onclick="nav('task')" id="btn-task" class="flex flex-col items-center text-[10px]"><span>🎁</span>Nhiệm vụ</button>
+        <button onclick="nav('draw')" id="btn-draw" class="flex flex-col items-center text-[10px]"><span>💳</span>Rút tiền</button>
     </div>
-
-    <div class="fixed bottom-0 left-0 right-0 bg-[#8b5e3c] h-18 flex justify-around items-center border-t-2 border-yellow-600 z-50">
-        <button onclick="nav('mine')" id="btn-mine" class="flex flex-col items-center text-[10px] active-tab py-2 px-4"><span>⛏️</span>Khai thác</button>
-        <button onclick="nav('task')" id="btn-task" class="flex flex-col items-center text-[10px] py-2 px-4"><span>🎁</span>Nhiệm vụ</button>
-        <button onclick="nav('ref')" id="btn-ref" class="flex flex-col items-center text-[10px] py-2 px-4"><span>👥</span>Bạn bè</button>
-        <button onclick="nav('draw')" id="btn-draw" class="flex flex-col items-center text-[10px] py-2 px-4"><span>💳</span>Rút tiền</button>
-    </div>
-
     <script src="script.js"></script>
 </body>
-</html>
+    </html>
