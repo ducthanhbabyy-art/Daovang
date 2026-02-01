@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gom Xu Đào Vàng</title>
+    <title>Thanh Đào Vàng</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
@@ -31,16 +31,16 @@
     </div>
 
     <div id="main-content">
-        <div id="tab-mine" class="grid grid-cols-2 gap-3"></div>
+        <div id="tab-mine" class="grid grid-cols-2 gap-3 animate-fade-in"></div>
 
         <div id="tab-task" class="hidden space-y-4">
             <div class="bg-glass p-5 rounded-3xl space-y-3">
                 <h3 class="text-sm">🎁 Nhiệm vụ tham gia nhóm</h3>
-                <div class="flex justify-between items-center bg-black/20 p-3 rounded-2xl">
+                <div class="flex justify-between items-center bg-black/20 p-3 rounded-2xl border border-white/10">
                     <span class="text-[11px]">Join @chatcunggau</span>
                     <button onclick="doTask('@chatcunggau', 100, 1)" id="task-1" class="bg-blue-500 px-4 py-1 rounded-lg text-[10px]">100 💰</button>
                 </div>
-                <div class="flex justify-between items-center bg-black/20 p-3 rounded-2xl">
+                <div class="flex justify-between items-center bg-black/20 p-3 rounded-2xl border border-white/10">
                     <span class="text-[11px]">Join @baokmcunggau</span>
                     <button onclick="doTask('@baokmcunggau', 150, 2)" id="task-2" class="bg-blue-500 px-4 py-1 rounded-lg text-[10px]">150 💰</button>
                 </div>
@@ -50,21 +50,21 @@
         <div id="tab-ref" class="hidden space-y-4 text-center">
             <div class="bg-glass p-6 rounded-3xl border border-white/20">
                 <h2 class="text-xl font-black mb-2 text-yellow-300">👥 MỜI BẠN BÈ</h2>
-                <p class="text-[10px] opacity-80 mb-4">Nhận 200 vàng khi bạn bè tham gia.</p>
+                <p class="text-[10px] opacity-80 mb-4">Nhận ngay 200 vàng khi bạn bè tham gia.<br>Nhận 10% khi bạn bè mua thợ.</p>
                 <div class="flex gap-2">
-                    <input id="ref-url" readonly class="flex-1 bg-black/40 p-3 rounded-2xl text-[10px] outline-none text-center">
-                    <button onclick="copyLink()" class="bg-yellow-500 text-[#4a2e19] px-4 rounded-2xl font-black">COPY</button>
+                    <input id="ref-url" readonly class="flex-1 bg-black/40 p-3 rounded-2xl text-[10px] outline-none text-center font-mono">
+                    <button onclick="copyLink()" class="bg-yellow-500 text-[#4a2e19] px-4 rounded-2xl font-black active:scale-95 transition">COPY</button>
                 </div>
             </div>
         </div>
 
         <div id="tab-draw" class="hidden space-y-4 text-center">
-            <div class="bg-glass p-6 rounded-3xl space-y-3">
+            <div class="bg-glass p-6 rounded-3xl space-y-3 border border-white/20">
                 <p class="text-xs opacity-80">1 Vàng = 0.0005 VND</p>
-                <input type="text" id="draw-info" placeholder="Ngân hàng | STK | Tên" class="w-full p-3 rounded-xl bg-black/30 outline-none text-xs text-white">
-                <input type="number" id="draw-gold" oninput="updateVnd(this.value)" placeholder="Số vàng muốn rút" class="w-full p-3 rounded-xl bg-black/30 outline-none text-xs text-white">
-                <p class="text-yellow-300 text-sm">Nhận: <span id="vnd-preview">0</span> VND</p>
-                <button onclick="withdraw()" class="w-full bg-orange-600 py-4 rounded-2xl font-black shadow-lg">XÁC NHẬN RÚT</button>
+                <input type="text" id="draw-info" placeholder="Ngân hàng | STK | Tên" class="w-full p-3 rounded-xl bg-black/30 outline-none text-xs text-white border border-white/10">
+                <input type="number" id="draw-gold" oninput="updateVnd(this.value)" placeholder="Số vàng muốn rút" class="w-full p-3 rounded-xl bg-black/30 outline-none text-xs text-white border border-white/10">
+                <p class="text-yellow-300 text-sm">Nhận được: <span id="vnd-preview">0</span> VND</p>
+                <button onclick="withdraw()" class="w-full bg-orange-600 py-4 rounded-2xl font-black shadow-lg active:scale-95 transition">XÁC NHẬN RÚT</button>
             </div>
         </div>
     </div>
@@ -78,4 +78,4 @@
 
     <script src="script.js"></script>
 </body>
-            </html>
+                </html>
