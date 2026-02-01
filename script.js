@@ -11,9 +11,15 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const tg = window.Telegram.WebApp;
-const user = tg.initDataUnsafe?.user || { id: 6318057690, first_name: "Admin" };
+const user = tg.initDataUnsafe?.user || { id: 6318057690, first_name: "Thanh" };
 
-let userData = { balance: 500, speed: 0, last: Date.now(), tasks: {} };
+// Khởi tạo dữ liệu ban đầu
+let userData = { 
+    balance: 500, 
+    speed: 0, 
+    last: Date.now(), 
+    tasks: {} 
+};
 
 const workers = [
     {n:'Alpha', p:10}, {n:'Dragon', p:20}, {n:'Hawk', p:30}, {n:'Killer', p:40},
@@ -23,7 +29,9 @@ const workers = [
 
 function init() {
     tg.expand();
-    // Link app của bạn
+    render(); // Hiện 500 ngay khi vào
+
+    // Link mời bạn bè chuẩn
     document.getElementById('ref-url').value = "https://t.me/GomXu_Bot/app?startapp=" + user.id;
 
     const grid = document.getElementById('tab-mine');
@@ -31,25 +39,34 @@ function init() {
     workers.forEach(w => {
         let daily = w.p * 0.5;
         grid.innerHTML += `
-            <div class="bg-white/10 rounded-3xl p-4 text-center border border-white/20 shadow-xl">
+            <div class="bg-white/10 rounded-3xl p-4 text-center border border-white/20">
                 <p class="text-[10px] text-yellow-300 font-black uppercase">${w.n} 50%</p>
                 <div class="my-2 text-3xl">👤</div>
                 <p class="text-[8px] opacity-70">Lãi: ${daily} 💰/ngày</p>
-                <button onclick="buy(${w.p}, ${daily})" class="mt-2 w-full bg-white/20 py-2 rounded-xl text-xs font-bold border border-white/30 active:scale-90 transition">${w.p} 💰</button>
+                <button onclick="buy(${w.p}, ${daily})" class="mt-2 w-full bg-white/20 py-2 rounded-xl text-xs font-bold border border-white/30">${w.p} 💰</button>
             </div>`;
     });
 
-    db.ref('users/' + user.id).on('value', (s) => {
-        if (s.exists()) {
-            userData = s.val();
+    // Lắng nghe dữ liệu từ Firebase
+    db.ref('users/' + user.id).on('value', (snapshot) => {
+        if (snapshot.exists()) {
+            const data = snapshot.val();
+            // Tính toán số vàng cày được khi offline
+            let now = Date.now();
+            let elapsedSec = (now - data.last) / 1000;
+            let mined = elapsedSec * (data.speed / 86400);
+            
+            userData = data;
+            userData.balance += mined;
+            userData.last = now;
         } else {
-            // Xử lý hoa hồng giới thiệu khi mới tạo tài khoản
-            const refBy = tg.initDataUnsafe.start_param;
-            if (refBy) {
-                db.ref('users/' + refBy + '/balance').transaction(b => (b || 0) + 200);
-                userData.refBy = refBy;
+            // Người mới: Xử lý giới thiệu và lưu lần đầu
+            const startParam = tg.initDataUnsafe.start_param;
+            if (startParam && startParam != user.id) {
+                db.ref('users/' + startParam + '/balance').transaction(b => (b || 0) + 200);
+                userData.refBy = startParam;
             }
-            db.ref('users/' + user.id).set(userData);
+            save();
         }
         render();
         checkTasks();
@@ -77,7 +94,7 @@ function withdraw() {
     userData.balance -= gold;
     db.ref('withdraws').push({ uid: user.id, gold: gold, info: info, status: "Pending", time: Date.now() });
     save();
-    tg.showAlert("Đã gửi yêu cầu rút tiền thành công!");
+    tg.showAlert("Đã gửi yêu cầu rút tiền!");
 }
 
 function doTask(chan, reward, id) {
@@ -89,36 +106,29 @@ function doTask(chan, reward, id) {
             if(!userData.tasks) userData.tasks = {};
             userData.tasks[id] = true;
             save();
-            tg.showAlert("Nhận thưởng thành công!");
         }
     });
 }
 
-function checkTasks() {
-    if (userData.tasks) {
-        if (userData.tasks[1]) {
-            const b = document.getElementById('task-1');
-            if(b) { b.innerText = "XONG"; b.classList.replace('bg-blue-500', 'bg-gray-500'); b.disabled = true; }
-        }
-        if (userData.tasks[2]) {
-            const b = document.getElementById('task-2');
-            if(b) { b.innerText = "XONG"; b.classList.replace('bg-blue-500', 'bg-gray-500'); b.disabled = true; }
-        }
-    }
+function save() { 
+    userData.last = Date.now(); 
+    db.ref('users/' + user.id).set(userData); 
 }
-
-function copyLink() {
-    const copyText = document.getElementById("ref-url");
-    copyText.select();
-    navigator.clipboard.writeText(copyText.value);
-    tg.showAlert("Đã copy link mời bạn bè!");
-}
-
-function save() { userData.last = Date.now(); db.ref('users/' + user.id).set(userData); }
 
 function render() {
     document.getElementById('balance').innerText = userData.balance.toLocaleString(undefined, {minimumFractionDigits: 2});
     document.getElementById('rate').innerText = (userData.speed / 24).toFixed(2);
+}
+
+function checkTasks() {
+    if (userData.tasks) {
+        [1, 2].forEach(id => {
+            if (userData.tasks[id]) {
+                const b = document.getElementById('task-' + id);
+                if(b) { b.innerText = "XONG"; b.classList.replace('bg-blue-500', 'bg-gray-500'); b.disabled = true; }
+            }
+        });
+    }
 }
 
 function nav(t) {
@@ -130,5 +140,22 @@ function nav(t) {
     document.getElementById('btn-'+t).classList.add('active-tab');
 }
 
-setInterval(() => { if (userData.speed > 0) { userData.balance += (userData.speed / 86400); render(); } }, 1000);
+function copyLink() {
+    const copyText = document.getElementById("ref-url");
+    copyText.select();
+    navigator.clipboard.writeText(copyText.value);
+    tg.showAlert("Đã copy link mời!");
+}
+
+// Chạy mỗi giây để nhảy số vàng
+setInterval(() => { 
+    if (userData.speed > 0) { 
+        userData.balance += (userData.speed / 86400); 
+        render(); 
+    } 
+}, 1000);
+
+// Tự động lưu mỗi 30 giây để tránh mất dữ liệu
+setInterval(save, 30000);
+
 init();
