@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Thanh Đào Vàng</title>
+    <title>Gom Xu Đào Vàng</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
@@ -12,6 +12,7 @@
         .active-tab { color: #facc15; border-top: 3px solid #facc15; font-weight: 900; }
         .bg-main { background: linear-gradient(to bottom, #008f5a, #d2b48c); }
         .bg-glass { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
+        input { color: white; }
     </style>
 </head>
 <body class="bg-main min-h-screen p-4 pb-24 font-bold text-white select-none">
@@ -31,17 +32,25 @@
     </div>
 
     <div id="main-content">
-        <div id="tab-mine" class="grid grid-cols-2 gap-3 animate-fade-in"></div>
+        <div id="tab-mine" class="grid grid-cols-2 gap-3"></div>
 
         <div id="tab-task" class="hidden space-y-4">
+            <div class="bg-glass p-5 rounded-3xl border border-yellow-500/30">
+                <h3 class="text-xs text-yellow-400 mb-2 uppercase">🎁 Nhập mã quà tặng</h3>
+                <div class="flex gap-2">
+                    <input type="text" id="giftcode-input" placeholder="Nhập mã tại đây..." class="flex-1 bg-black/40 p-3 rounded-xl text-xs outline-none border border-white/10 uppercase">
+                    <button onclick="redeemCode()" class="bg-yellow-500 text-[#4a2e19] px-4 rounded-xl text-xs font-black">NHẬN</button>
+                </div>
+            </div>
+            
             <div class="bg-glass p-5 rounded-3xl space-y-3">
-                <h3 class="text-sm">🎁 Nhiệm vụ tham gia nhóm</h3>
-                <div class="flex justify-between items-center bg-black/20 p-3 rounded-2xl border border-white/10">
-                    <span class="text-[11px]">Join @chatcunggau</span>
+                <h3 class="text-xs uppercase text-blue-300">Nhiệm vụ cộng đồng</h3>
+                <div class="flex justify-between items-center bg-black/20 p-3 rounded-2xl">
+                    <span class="text-[11px]">Tham gia @chatcunggau</span>
                     <button onclick="doTask('@chatcunggau', 100, 1)" id="task-1" class="bg-blue-500 px-4 py-1 rounded-lg text-[10px]">100 💰</button>
                 </div>
-                <div class="flex justify-between items-center bg-black/20 p-3 rounded-2xl border border-white/10">
-                    <span class="text-[11px]">Join @baokmcunggau</span>
+                <div class="flex justify-between items-center bg-black/20 p-3 rounded-2xl">
+                    <span class="text-[11px]">Tham gia @baokmcunggau</span>
                     <button onclick="doTask('@baokmcunggau', 150, 2)" id="task-2" class="bg-blue-500 px-4 py-1 rounded-lg text-[10px]">150 💰</button>
                 </div>
             </div>
@@ -50,21 +59,46 @@
         <div id="tab-ref" class="hidden space-y-4 text-center">
             <div class="bg-glass p-6 rounded-3xl border border-white/20">
                 <h2 class="text-xl font-black mb-2 text-yellow-300">👥 MỜI BẠN BÈ</h2>
-                <p class="text-[10px] opacity-80 mb-4">Nhận ngay 200 vàng khi bạn bè tham gia.<br>Nhận 10% khi bạn bè mua thợ.</p>
-                <div class="flex gap-2">
-                    <input id="ref-url" readonly class="flex-1 bg-black/40 p-3 rounded-2xl text-[10px] outline-none text-center font-mono">
-                    <button onclick="copyLink()" class="bg-yellow-500 text-[#4a2e19] px-4 rounded-2xl font-black active:scale-95 transition">COPY</button>
-                </div>
+                <p class="text-[10px] opacity-80 mb-4 font-normal">Nhận 200 vàng khi bạn mới tham gia và 10% hoa hồng khi họ mua thợ đào.</p>
+                <input id="ref-url" readonly class="w-full bg-black/40 p-3 rounded-2xl text-[10px] outline-none text-center mb-2 font-mono">
+                <button onclick="copyLink()" class="w-full bg-yellow-500 text-[#4a2e19] py-3 rounded-2xl font-black">SAO CHÉP LIÊN KẾT</button>
             </div>
         </div>
 
-        <div id="tab-draw" class="hidden space-y-4 text-center">
-            <div class="bg-glass p-6 rounded-3xl space-y-3 border border-white/20">
-                <p class="text-xs opacity-80">1 Vàng = 0.0005 VND</p>
-                <input type="text" id="draw-info" placeholder="Ngân hàng | STK | Tên" class="w-full p-3 rounded-xl bg-black/30 outline-none text-xs text-white border border-white/10">
-                <input type="number" id="draw-gold" oninput="updateVnd(this.value)" placeholder="Số vàng muốn rút" class="w-full p-3 rounded-xl bg-black/30 outline-none text-xs text-white border border-white/10">
-                <p class="text-yellow-300 text-sm">Nhận được: <span id="vnd-preview">0</span> VND</p>
-                <button onclick="withdraw()" class="w-full bg-orange-600 py-4 rounded-2xl font-black shadow-lg active:scale-95 transition">XÁC NHẬN RÚT</button>
+        <div id="tab-draw" class="hidden space-y-4">
+            <div class="bg-glass p-6 rounded-3xl space-y-3 border border-white/20 text-center">
+                <p class="text-xs opacity-80">Tỉ lệ quy đổi: 1 Vàng = 0.0005 VND</p>
+                <input type="text" id="draw-info" placeholder="Ngân hàng | STK | Tên" class="w-full p-3 rounded-xl bg-black/30 outline-none text-xs">
+                <input type="number" id="draw-gold" oninput="updateVnd(this.value)" placeholder="Số vàng muốn rút" class="w-full p-3 rounded-xl bg-black/30 outline-none text-xs">
+                <p class="text-yellow-300 text-sm font-black">Nhận được: <span id="vnd-preview">0</span> VND</p>
+                <button onclick="withdraw()" class="w-full bg-orange-600 py-4 rounded-2xl font-black">XÁC NHẬN RÚT</button>
+            </div>
+        </div>
+
+        <div id="tab-admin" class="hidden space-y-4 pb-10">
+            <div class="bg-red-900/40 p-5 rounded-3xl border border-red-500/50">
+                <h2 class="text-center text-red-400 font-black mb-4">QUẢN TRỊ VIÊN</h2>
+                
+                <div class="bg-black/20 p-3 rounded-xl mb-4 space-y-2 border border-white/5">
+                    <p class="text-[10px] text-yellow-500">TẠO GIFTCODE MỚI:</p>
+                    <input type="text" id="admin-code" placeholder="Mã (VD: THANH100)" class="w-full p-2 rounded bg-black/40 text-xs">
+                    <input type="number" id="admin-code-val" placeholder="Số tiền tặng" class="w-full p-2 rounded bg-black/40 text-xs">
+                    <input type="number" id="admin-code-limit" placeholder="Số lượt nhập" class="w-full p-2 rounded bg-black/40 text-xs">
+                    <button onclick="createGiftcode()" class="w-full bg-yellow-600 py-2 rounded text-xs font-black">TẠO MÃ</button>
+                </div>
+
+                <div class="bg-black/20 p-3 rounded-xl mb-4 space-y-2 border border-white/5">
+                    <p class="text-[10px] text-blue-400">CHỈNH SỐ DƯ (UID):</p>
+                    <input type="text" id="admin-uid" placeholder="Nhập UID người chơi" class="w-full p-2 rounded bg-black/40 text-xs">
+                    <input type="number" id="admin-amount" placeholder="Số vàng" class="w-full p-2 rounded bg-black/40 text-xs">
+                    <div class="flex gap-2">
+                        <button onclick="adminAdjust(true)" class="flex-1 bg-green-600 py-2 rounded text-xs">CỘNG (+)</button>
+                        <button onclick="adminAdjust(false)" class="flex-1 bg-red-600 py-2 rounded text-xs">TRỪ (-)</button>
+                    </div>
+                </div>
+
+                <p class="text-[10px] text-green-400 mb-2">DANH SÁCH CHỜ DUYỆT:</p>
+                <div id="admin-withdraw-list" class="space-y-2"></div>
             </div>
         </div>
     </div>
@@ -74,8 +108,9 @@
         <button onclick="nav('task')" id="btn-task" class="flex flex-col items-center text-[10px]"><span>🎁</span>Nhiệm vụ</button>
         <button onclick="nav('ref')" id="btn-ref" class="flex flex-col items-center text-[10px]"><span>👥</span>Mời bạn</button>
         <button onclick="nav('draw')" id="btn-draw" class="flex flex-col items-center text-[10px]"><span>💳</span>Rút tiền</button>
+        <button onclick="nav('admin')" id="btn-admin" class="hidden flex-col items-center text-[10px] text-red-400"><span>⚙️</span>Admin</button>
     </div>
 
     <script src="script.js"></script>
 </body>
-                </html>
+                    </html>
