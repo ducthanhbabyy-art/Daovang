@@ -44,47 +44,54 @@
             </div>
             <div class="bg-glass p-5 rounded-3xl space-y-3">
                 <h3 class="text-xs uppercase text-blue-300">Nhiệm vụ cộng đồng</h3>
-                <div class="flex justify-between items-center bg-black/20 p-3 rounded-2xl border border-white/5">
-                    <span class="text-[11px]">Tham gia @chatcunggau</span>
-                    <button onclick="doTask('@chatcunggau', 100, 1)" id="task-1" class="bg-blue-500 px-4 py-1 rounded-lg text-[10px]">100 💰</button>
-                </div>
-                <div class="flex justify-between items-center bg-black/20 p-3 rounded-2xl border border-white/5">
-                    <span class="text-[11px]">Tham gia @baokmcunggau</span>
-                    <button onclick="doTask('@baokmcunggau', 150, 2)" id="task-2" class="bg-blue-500 px-4 py-1 rounded-lg text-[10px]">150 💰</button>
+                <div id="task-list" class="space-y-3">
+                    <div class="flex justify-between items-center bg-black/20 p-3 rounded-2xl border border-white/5">
+                        <span class="text-[11px]">Tham gia @chatcunggau</span>
+                        <button onclick="doTask('@chatcunggau', 100, 1)" id="task-1" class="bg-blue-500 px-4 py-1 rounded-lg text-[10px]">100 💰</button>
+                    </div>
+                    <div class="flex justify-between items-center bg-black/20 p-3 rounded-2xl border border-white/5">
+                        <span class="text-[11px]">Tham gia @baokmcunggau</span>
+                        <button onclick="doTask('@baokmcunggau', 150, 2)" id="task-2" class="bg-blue-500 px-4 py-1 rounded-lg text-[10px]">150 💰</button>
+                    </div>
                 </div>
             </div>
         </div>
 
         <div id="tab-draw" class="hidden space-y-4 text-center">
             <div class="bg-glass p-6 rounded-3xl space-y-3 border border-white/20">
-                <p class="text-[11px] text-yellow-200 font-black uppercase">500 Vàng = 5.000 VND</p>
+                <p class="text-[11px] text-yellow-200 font-black uppercase tracking-tighter">1.000 Vàng = 5.000 VND</p>
                 <input type="text" id="draw-info" placeholder="Ngân hàng | STK | Tên" class="w-full p-3 bg-black/30 text-xs border border-white/10 outline-none">
-                <input type="number" id="draw-gold" oninput="updateVnd(this.value)" placeholder="Vàng rút (Tối thiểu 500)" class="w-full p-3 bg-black/30 text-xs border border-white/10 outline-none">
+                <input type="number" id="draw-gold" oninput="updateVnd(this.value)" placeholder="Vàng rút (Tối thiểu 1.000)" class="w-full p-3 bg-black/30 text-xs border border-white/10 outline-none">
                 <p class="text-yellow-400 text-sm font-black">Thực nhận: <span id="vnd-preview">0</span> VND</p>
                 <button onclick="withdraw()" class="w-full bg-orange-600 py-4 rounded-2xl font-black shadow-lg">XÁC NHẬN RÚT</button>
+            </div>
+            
+            <div class="bg-black/20 p-4 rounded-3xl text-left border border-white/10">
+                <h3 class="text-[10px] text-gray-300 uppercase mb-3 text-center">📜 Lịch sử rút tiền của bạn</h3>
+                <div id="user-history" class="space-y-2 max-h-48 overflow-y-auto"></div>
             </div>
         </div>
 
         <div id="tab-admin" class="hidden space-y-4 pb-10">
             <div class="bg-red-900/40 p-5 rounded-3xl border border-red-500/50">
-                <h2 class="text-center text-red-400 font-black mb-4 uppercase">Admin Panel</h2>
+                <h2 class="text-center text-red-400 font-black mb-4 uppercase">Admin Control</h2>
                 <div class="bg-black/30 p-3 rounded-xl mb-4 border border-white/5">
-                    <p class="text-[10px] text-yellow-400 mb-2 font-bold">TẠO GIFTCODE:</p>
-                    <input type="text" id="admin-code-name" placeholder="MÃ" class="w-full p-2 mb-1 bg-black/40 text-xs uppercase">
+                    <p class="text-[10px] text-yellow-400 mb-1 font-bold">TẠO GIFTCODE:</p>
+                    <input type="text" id="admin-code-name" placeholder="MÃ" class="w-full p-2 mb-1 bg-black/40 text-xs uppercase font-mono">
                     <input type="number" id="admin-code-reward" placeholder="Vàng thưởng" class="w-full p-2 mb-1 bg-black/40 text-xs">
-                    <input type="number" id="admin-code-limit" placeholder="Số lượt nhập" class="w-full p-2 mb-2 bg-black/40 text-xs">
-                    <button onclick="createGiftcode()" class="w-full bg-blue-600 py-2 rounded text-[10px] font-bold">TẠO CODE</button>
+                    <input type="number" id="admin-code-limit" placeholder="Số lượt" class="w-full p-2 mb-2 bg-black/40 text-xs">
+                    <button onclick="createGiftcode()" class="w-full bg-blue-600 py-2 rounded text-[10px]">TẠO</button>
                 </div>
                 <div class="bg-black/30 p-3 rounded-xl mb-4 border border-white/5">
-                    <p class="text-[10px] text-blue-400 mb-2 font-bold">SỬA VÀNG (UID):</p>
+                    <p class="text-[10px] text-blue-400 mb-1 font-bold">CỘNG/TRỪ (UID):</p>
                     <input type="text" id="admin-uid" placeholder="UID" class="w-full p-2 mb-1 bg-black/40 text-xs">
-                    <input type="number" id="admin-amount" placeholder="Số lượng" class="w-full p-2 mb-2 bg-black/40 text-xs">
+                    <input type="number" id="admin-amount" placeholder="Số vàng" class="w-full p-2 mb-1 bg-black/40 text-xs">
                     <div class="flex gap-2">
                         <button onclick="adminAdjust(true)" class="flex-1 bg-green-600 py-2 rounded text-[10px]">CỘNG (+)</button>
                         <button onclick="adminAdjust(false)" class="flex-1 bg-red-600 py-2 rounded text-[10px]">TRỪ (-)</button>
                     </div>
                 </div>
-                <p class="text-[10px] text-green-400 mb-2 uppercase font-bold">Yêu cầu rút:</p>
+                <p class="text-[10px] text-green-400 mb-2 uppercase font-bold">Duyệt lệnh rút:</p>
                 <div id="admin-withdraw-list" class="space-y-2"></div>
             </div>
         </div>
@@ -92,11 +99,11 @@
 
     <div class="fixed bottom-0 left-0 right-0 bg-[#8b5e3c] h-18 flex justify-around items-center border-t-2 border-yellow-600 z-50">
         <button onclick="nav('mine')" id="btn-mine" class="flex flex-col items-center text-[10px] active-tab"><span>⛏️</span>Đào</button>
-        <button onclick="nav('task')" id="btn-task" class="flex flex-col items-center text-[10px]"><span>🎁</span>Nhiệm vụ</button>
+        <button onclick="nav('task')" id="btn-task" class="flex flex-col items-center text-[10px]"><span>🎁</span>Quà</button>
         <button onclick="nav('draw')" id="btn-draw" class="flex flex-col items-center text-[10px]"><span>💳</span>Rút tiền</button>
-        <button onclick="nav('admin')" id="btn-admin" class="hidden flex-col items-center text-[10px] text-red-400"><span>⚙️</span>Quản lý</button>
+        <button onclick="nav('admin')" id="btn-admin" class="hidden flex-col items-center text-[10px] text-red-400 font-black"><span>⚙️</span>Quản lý</button>
     </div>
 
     <script src="script.js"></script>
 </body>
-                    </html>
+    </html>
